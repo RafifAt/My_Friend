@@ -5,17 +5,24 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.Toast
+import android.widget.*
 import androidx.fragment.app.Fragment
-import kotlinx.android.synthetic.*
-import kotlinx.android.synthetic.main.my_friends_add_fragment.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class MyFriendsAddFragment : Fragment() {
+    private var namaInput: String = ""
+    private var emailInput: String = ""
+    private var telpInput: String = ""
+    private var alamatInput: String = ""
+    private var genderInput: String = ""
+
+    private var edtName: EditText? = null
+    private var edtEmail: EditText? = null
+    private var edtTelp: EditText? = null
+    private var edtAddress: EditText? = null
+    private var spinnerGender: Spinner? = null
     private var btnSave: Button? = null
 
     companion object {
@@ -23,12 +30,6 @@ class MyFriendsAddFragment : Fragment() {
             return MyFriendsAddFragment()
         }
     }
-
-    private var namaInput: String = ""
-    private var emailInput: String = ""
-    private var telpInput: String = ""
-    private var alamatInput: String = ""
-    private var genderInput: String = ""
 
     private var db: AppDatabase? = null
     private var myFriendsDao: MyFriendDao? = null
@@ -54,42 +55,51 @@ class MyFriendsAddFragment : Fragment() {
     private fun initLocalDB() {
         db = AppDatabase.getAppDataBase(requireActivity())
         myFriendsDao = db?.myFriendDao()
+        setDataSpinnerGender()
     }
 
     private fun initView() {
+        spinnerGender = activity?.findViewById(R.id.spinnerGender)
 
-        btnSave?.setOnClickListener { validasiInput() }
-        setDataSpinnerGender()
+        edtName = activity?.findViewById(R.id.edtName)
+        edtEmail = activity?.findViewById(R.id.edtEmail)
+        edtTelp = activity?.findViewById(R.id.edtTelp)
+        edtAddress = activity?.findViewById(R.id.edtAddress)
+
+        btnSave = activity?.findViewById(R.id.btnSave)
+        btnSave?.setOnClickListener {
+            (activity as MainActivity).tampilMyFriendsFragment()
+            validasiInput()
+        }
+
     }
 
     private fun setDataSpinnerGender() {
         val adapter = ArrayAdapter.createFromResource(
             requireActivity(),
-            R.array.gender_list, android.R.layout.simple_spinner_item
-        )
+            R.array.gender_list, android.R.layout.simple_spinner_item)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-
-        spinnerGender.adapter = adapter
+        spinnerGender?.adapter = adapter
     }
 
     private fun validasiInput() {
-        namaInput = edtName.text.toString()
-        emailInput = edtEmail.text.toString()
-        telpInput = edtTelp.text.toString()
-        alamatInput = edtAddress.text.toString()
-        genderInput = spinnerGender.selectedItem.toString()
+        namaInput = edtName?.text.toString()
+        emailInput = edtEmail?.text.toString()
+        telpInput = edtTelp?.text.toString()
+        alamatInput = edtAddress?.text.toString()
+        genderInput = spinnerGender?.selectedItem.toString()
 
         when {
-            namaInput.isEmpty() -> edtName.error = "Nama tidak bolehkosong"
+            namaInput.isEmpty() -> edtName?.error = "Nama tidak bolehkosong"
 
             genderInput.equals("Pilih kelamin") ->
                 tampilToast("Kelamin harus dipilih")
 
-            emailInput.isEmpty() -> edtEmail.error = "Emailtidak boleh kosong"
+            emailInput.isEmpty() -> edtEmail?.error = "Emailtidak boleh kosong"
 
-            telpInput.isEmpty() -> edtTelp.error = "Telp tidak bolehkosong"
+            telpInput.isEmpty() -> edtTelp?.error = "Telp tidak bolehkosong"
 
-            alamatInput.isEmpty() -> edtAddress.error = "Alamat tidak boleh kosong"
+            alamatInput.isEmpty() -> edtAddress?.error = "Alamat tidak boleh kosong"
 
             else -> {
                 val teman = MyFriends(
@@ -105,7 +115,6 @@ class MyFriendsAddFragment : Fragment() {
         }
     }
     private fun tambahDataTeman(teman: MyFriends) : Job {
-
         return GlobalScope.launch {
             myFriendsDao?.tambahTeman(teman)
             (activity as MainActivity).tampilMyFriendsAddFragment()
@@ -117,7 +126,13 @@ class MyFriendsAddFragment : Fragment() {
 
     override fun onDestroy() {
         super.onDestroy()
-        this.clearFindViewByIdCache()
+        db?.close()
+        edtName = null
+        edtEmail = null
+        edtTelp = null
+        edtAddress = null
+        btnSave = null
+        spinnerGender = null
     }
 }
 
